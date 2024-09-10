@@ -1,7 +1,9 @@
 package com.example.chatserveruser.global.security.filter;
 
+import com.example.chatserveruser.domain.dto.UserDTO;
 import com.example.chatserveruser.domain.entity.UserRoleEnum;
 import com.example.chatserveruser.domain.service.UserService;
+import com.example.chatserveruser.global.kafka.KafkaProducer;
 import com.example.chatserveruser.global.security.service.JwtTokenService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -34,6 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService jwtTokenService;
     private final UserService userService;
     private final UserDetailsService userDetailsService;
+    private final KafkaProducer kafkaProducer;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -62,9 +65,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             log.info("정상 확인 후, 추출된 토큰: {}", tokenValue);
 
+            UserDTO userDTO = jwtTokenService.getUserFromToken(tokenValue);
+            String email = userDTO.getEmail();
+
             SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(createAuthentication(jwtTokenService.getUserFromToken(tokenValue).getEmail()));
+            context.setAuthentication(createAuthentication(email));
             SecurityContextHolder.setContext(context);
+
+            // kafka 전송 to 채팅
+            kafkaProducer.sendMessage(email);
 
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException ex) {

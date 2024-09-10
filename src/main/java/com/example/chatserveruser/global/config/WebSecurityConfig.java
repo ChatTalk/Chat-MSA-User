@@ -1,6 +1,7 @@
 package com.example.chatserveruser.global.config;
 
 import com.example.chatserveruser.domain.service.UserService;
+import com.example.chatserveruser.global.kafka.KafkaProducer;
 import com.example.chatserveruser.global.security.exception.JwtAccessDenyHandler;
 import com.example.chatserveruser.global.security.exception.JwtAuthenticationEntryPoint;
 import com.example.chatserveruser.global.security.filter.CustomLoginFilter;
@@ -54,6 +55,8 @@ public class WebSecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // 인증 예외 커스텀 메시지 던지기
     private final JwtAccessDenyHandler jwtAccessDenyHandler; // 인가 예외 커스텀 메시지 던지기(역할별 접근권한같은)
     private final JwtExceptionFilter jwtExceptionFilter;
+    // 카프카
+    private final KafkaProducer kafkaProducer;
 
     // 인증 매니저 생성
     @Bean
@@ -106,7 +109,7 @@ public class WebSecurityConfig {
 
         // 필터 체인에 필터 추가 및 순서 지정
         http.addFilterBefore(new JwtAuthorizationFilter(), CustomLoginFilter.class);
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenService, userService, userDetailsService), JwtAuthorizationFilter.class);
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenService, userService, userDetailsService, kafkaProducer), JwtAuthorizationFilter.class);
         http.addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);
         http.addFilterBefore(customLoginFilter(), UsernamePasswordAuthenticationFilter.class);
 
