@@ -6,10 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -24,5 +21,11 @@ public class UserController {
     public ResponseEntity<UserDTO> signup(@RequestBody UserDTO userDTO) {
         log.info("회원가입 시도 이메일: {}", userDTO.getEmail());
         return new ResponseEntity<>(userService.createUser(userDTO), HttpStatus.OK);
+    }
+
+    // 카프카 테스트
+    @GetMapping("/test")
+    public void test() {
+        log.info("테스트 성공");
     }
 }
