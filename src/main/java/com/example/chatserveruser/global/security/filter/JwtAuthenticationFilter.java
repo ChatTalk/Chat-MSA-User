@@ -3,7 +3,6 @@ package com.example.chatserveruser.global.security.filter;
 import com.example.chatserveruser.domain.dto.UserDTO;
 import com.example.chatserveruser.domain.entity.UserRoleEnum;
 import com.example.chatserveruser.domain.service.UserService;
-import com.example.chatserveruser.global.kafka.KafkaProducer;
 import com.example.chatserveruser.global.security.service.JwtTokenService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -14,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -27,6 +27,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import static com.example.chatserveruser.global.constant.Constants.COOKIE_AUTH_HEADER;
+import static com.example.chatserveruser.global.constant.Constants.KAFKA_USER_TO_CHAT_TOPIC;
 
 
 @RequiredArgsConstructor
@@ -36,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService jwtTokenService;
     private final UserService userService;
     private final UserDetailsService userDetailsService;
-    private final KafkaProducer kafkaProducer;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -73,7 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.setContext(context);
 
             // kafka 전송 to 채팅
-            kafkaProducer.sendMessage(email);
+            kafkaTemplate.send(KAFKA_USER_TO_CHAT_TOPIC, email);
 
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException ex) {
