@@ -5,6 +5,7 @@ import com.example.chatserveruser.global.security.service.JwtTokenService;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
@@ -14,11 +15,20 @@ import static com.example.chatserveruser.global.constant.Constants.REDIS_ACCESS_
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KafkaListenerService {
 
     private final JwtTokenService jwtTokenService;
     private final RedisTemplate<String, String> authTemplate;
+    private final RedisTemplate<String, String> cacheTemplate;
+
+    public KafkaListenerService(
+            JwtTokenService jwtTokenService,
+            @Qualifier("authTemplate") RedisTemplate<String, String> authTemplate,
+            @Qualifier("cacheTemplate") RedisTemplate<String, String> cacheTemplate) {
+        this.jwtTokenService = jwtTokenService;
+        this.authTemplate = authTemplate;
+        this.cacheTemplate = cacheTemplate;
+    }
 
     // 필요한 다른 곳에서 동일한 어노테이션을 할당하고 메세지를 받으면 됨
     @KafkaListener(topics = KAFKA_OTHER_TO_USER_TOPIC, groupId = "chat")
