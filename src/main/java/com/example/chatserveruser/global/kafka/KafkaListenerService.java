@@ -2,13 +2,13 @@ package com.example.chatserveruser.global.kafka;
 
 import com.example.chatserveruser.domain.dto.UserDTO;
 import com.example.chatserveruser.global.security.service.JwtTokenService;
-import io.jsonwebtoken.JwtException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.example.chatserveruser.global.constant.Constants.KAFKA_OTHER_TO_USER_TOPIC;
 import static com.example.chatserveruser.global.constant.Constants.REDIS_ACCESS_KEY;
@@ -18,15 +18,12 @@ import static com.example.chatserveruser.global.constant.Constants.REDIS_ACCESS_
 public class KafkaListenerService {
 
     private final JwtTokenService jwtTokenService;
-    private final RedisTemplate<String, String> authTemplate;
     private final RedisTemplate<String, String> cacheTemplate;
 
     public KafkaListenerService(
             JwtTokenService jwtTokenService,
-            @Qualifier("authTemplate") RedisTemplate<String, String> authTemplate,
             @Qualifier("cacheTemplate") RedisTemplate<String, String> cacheTemplate) {
         this.jwtTokenService = jwtTokenService;
-        this.authTemplate = authTemplate;
         this.cacheTemplate = cacheTemplate;
     }
 
@@ -36,7 +33,7 @@ public class KafkaListenerService {
         log.info("수신한 날 것의 엑세스 토큰: {} ", beforeToken);
 
         // 레디스에 beforeToken - email 로 저장된 캐싱 조회해서 없으면 슉슉
-        if (Boolean.TRUE.equals(authTemplate.hasKey(beforeToken))) {
+        if (Boolean.TRUE.equals(cacheTemplate.hasKey(REDIS_ACCESS_KEY + beforeToken))) {
             log.info("이미 해당 토큰이 캐싱되어 있음: {} ", beforeToken);
             return;
         }
@@ -49,7 +46,11 @@ public class KafkaListenerService {
         UserDTO userDTO = jwtTokenService.getUserFromToken(tokenValue);
         String email = userDTO.getEmail();
 
-        authTemplate.opsForSet().add(REDIS_ACCESS_KEY + beforeToken, email);
-        log.info("레디스 저장, 이메일: {} // 토큰: {}", email, beforeToken);
+        cacheTemplate.opsForValue().set(REDIS_ACCESS_KEY + beforeToken, email);
+        cacheTemplate.expire(
+                REDIS_ACCESS_KEY + beforeToken,
+                120 * 30 * 1000L,
+                TimeUnit.MILLISECONDS); // 캐시 만료시간 지정
+        log.info("캐시 저장, 이메일: {} // 토큰: {}", email, beforeToken);
     }
 }
