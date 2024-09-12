@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -27,7 +26,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 import static com.example.chatserveruser.global.constant.Constants.COOKIE_AUTH_HEADER;
-import static com.example.chatserveruser.global.constant.Constants.KAFKA_USER_TO_CHAT_TOPIC;
 
 
 @RequiredArgsConstructor
@@ -37,7 +35,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService jwtTokenService;
     private final UserService userService;
     private final UserDetailsService userDetailsService;
-    private final KafkaTemplate<String, String> kafkaTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -76,9 +73,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(createAuthentication(email));
             SecurityContextHolder.setContext(context);
-
-            // kafka 전송 to 채팅
-            kafkaTemplate.send(KAFKA_USER_TO_CHAT_TOPIC, email);
 
             filterChain.doFilter(request, response);
         } catch (ExpiredJwtException ex) {
