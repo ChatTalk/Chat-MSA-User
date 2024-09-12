@@ -49,21 +49,16 @@ public class RedisConfig {
 
     @Bean(name = "authTemplate")
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
-        RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionFactory(redisConnectionFactory);
-
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
-
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));
-
-        return redisTemplate;
+        return getRedisTemplate(redisConnectionFactory);
     }
 
     // beforeToken - email
     @Bean(name = "cacheTemplate")
     public RedisTemplate<String, String> cacheTemplate(RedisConnectionFactory redisConnectionFactory) {
+        return getRedisTemplate(redisConnectionFactory);
+    }
+
+    private RedisTemplate<String, String> getRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
 
