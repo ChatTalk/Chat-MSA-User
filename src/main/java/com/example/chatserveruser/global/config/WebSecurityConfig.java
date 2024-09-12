@@ -28,11 +28,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 import static com.example.chatserveruser.global.constant.Constants.COOKIE_AUTH_HEADER;
 
@@ -55,8 +50,6 @@ public class WebSecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // 인증 예외 커스텀 메시지 던지기
     private final JwtAccessDenyHandler jwtAccessDenyHandler; // 인가 예외 커스텀 메시지 던지기(역할별 접근권한같은)
     private final JwtExceptionFilter jwtExceptionFilter;
-    // 카프카
-    private final KafkaTemplate<String, String> kafkaTemplate;
 
     // 인증 매니저 생성
     @Bean
@@ -109,7 +102,7 @@ public class WebSecurityConfig {
 
         // 필터 체인에 필터 추가 및 순서 지정
         http.addFilterBefore(new JwtAuthorizationFilter(), CustomLoginFilter.class);
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenService, userService, userDetailsService, kafkaTemplate), JwtAuthorizationFilter.class);
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenService, userService, userDetailsService), JwtAuthorizationFilter.class);
         http.addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);
         http.addFilterBefore(customLoginFilter(), UsernamePasswordAuthenticationFilter.class);
 

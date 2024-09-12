@@ -20,8 +20,8 @@ public class KafkaConsumerConfig {
     @Value("${kafka.uri}")
     private String uri;
 
-    @Value("${kafka.group-id}")
-    private String groupId;
+//    @Value("${kafka.group-id}")
+//    private String groupId;
 
     @Value("${kafka.auto-offset-reset}")
     private String autoOffsetReset;
