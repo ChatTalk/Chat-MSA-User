@@ -10,6 +10,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import static com.example.chatserveruser.global.constant.Constants.KAFKA_OTHER_TO_USER_TOPIC;
+import static com.example.chatserveruser.global.constant.Constants.REDIS_ACCESS_KEY;
 
 @Slf4j
 @Service
@@ -38,7 +39,7 @@ public class KafkaListenerService {
         UserDTO userDTO = jwtTokenService.getUserFromToken(tokenValue);
         String email = userDTO.getEmail();
 
-        authTemplate.opsForSet().add(beforeToken, email);
+        authTemplate.opsForSet().add(REDIS_ACCESS_KEY + beforeToken, email);
         log.info("레디스 저장, 이메일: {} // 토큰: {}", email, beforeToken);
     }
 }
