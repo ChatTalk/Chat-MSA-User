@@ -54,6 +54,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String beforeToken = findAccessToken(request.getCookies());
         log.info("초기 토큰값: {}", beforeToken);
 
+        /**
+         * 이 시점에서 받아야 하는 걸까?
+         */
+
         try {
             // 엑세스토큰 유효기간 만료시 바로 JwtException 발생
             // 그로 인해 JwtException 필터에서 곧바로 로그인 화면으로 내보내는 것

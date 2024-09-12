@@ -12,4 +12,5 @@ public final class Constants {
 
     // kafka 상수
     public static final String KAFKA_USER_TO_CHAT_TOPIC = "email";  // chat 인스턴스에 전파하기 위한 토픽
+    public static final String KAFKA_OTHER_TO_USER_TOPIC = "authorization"; // user 인스턴스로 오는 날 것의 엑세스 토큰 수신을 위한 토픽
 }
