@@ -1,5 +1,6 @@
 package com.example.chatserveruser.global.config;
 
+import com.example.chatserveruser.domain.dto.UserInfoDTO;
 import com.example.chatserveruser.domain.service.UserService;
 import com.example.chatserveruser.global.security.exception.JwtAccessDenyHandler;
 import com.example.chatserveruser.global.security.exception.JwtAuthenticationEntryPoint;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -46,6 +48,7 @@ public class WebSecurityConfig {
     private final JwtTokenService jwtTokenService;
     private final AuthenticationConfiguration authenticationConfiguration;
     private final CustomLogoutHandler customLogoutHandler;
+    private final RedisTemplate<String, UserInfoDTO> cacheTemplate;
     // 필터단 예외
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // 인증 예외 커스텀 메시지 던지기
     private final JwtAccessDenyHandler jwtAccessDenyHandler; // 인가 예외 커스텀 메시지 던지기(역할별 접근권한같은)
@@ -102,23 +105,10 @@ public class WebSecurityConfig {
 
         // 필터 체인에 필터 추가 및 순서 지정
         http.addFilterBefore(new JwtAuthorizationFilter(), CustomLoginFilter.class);
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenService, userService, userDetailsService), JwtAuthorizationFilter.class);
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenService, userService, userDetailsService, cacheTemplate), JwtAuthorizationFilter.class);
         http.addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);
         http.addFilterBefore(customLoginFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
-//    @Bean
-//    CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowedOrigins(Arrays.asList(clientUrl));
-//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
-//        configuration.setAllowedHeaders(Arrays.asList("*"));
-//        configuration.setAllowCredentials(true);
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
-//    }
 }

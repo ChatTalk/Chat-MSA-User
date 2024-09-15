@@ -1,6 +1,7 @@
 package com.example.chatserveruser.global.security.filter;
 
 import com.example.chatserveruser.domain.dto.UserDTO;
+import com.example.chatserveruser.domain.dto.UserInfoDTO;
 import com.example.chatserveruser.domain.entity.UserRoleEnum;
 import com.example.chatserveruser.domain.service.UserService;
 import com.example.chatserveruser.global.security.service.JwtTokenService;
@@ -13,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -35,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenService jwtTokenService;
     private final UserService userService;
     private final UserDetailsService userDetailsService;
+    private final RedisTemplate<String, UserInfoDTO> cacheTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -51,54 +54,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String beforeToken = findAccessToken(request.getCookies());
         log.info("초기 토큰값: {}", beforeToken);
 
-        /**
-         * 이 시점에서 받아야 하는 걸까?
-         */
+        String username = request.getHeader("email");
+        log.info("헤더 확인(username): {}", username);
+        log.info("헤더 확인(role): {}", request.getHeader("role"));
 
-        try {
-            // 엑세스토큰 유효기간 만료시 바로 JwtException 발생
-            // 그로 인해 JwtException 필터에서 곧바로 로그인 화면으로 내보내는 것
-            // 즉, 엑세스토큰 유효기간 만료시, 리프레쉬 토큰을 기반으로 한 재발급 절차 추가가 필요
-
-            if (beforeToken == null) throw new JwtException("엑세스 토큰이 존재하지 않습니다.");
-
-            String tokenValue = jwtTokenService.extractValue(beforeToken);
-            jwtTokenService.validAccessToken(tokenValue);
-
-            log.info("정상 확인 후, 추출된 토큰: {}", tokenValue);
-
-            UserDTO userDTO = jwtTokenService.getUserFromToken(tokenValue);
-            String email = userDTO.getEmail();
-
-            SecurityContext context = SecurityContextHolder.createEmptyContext();
-            context.setAuthentication(createAuthentication(email));
-            SecurityContextHolder.setContext(context);
-
-            filterChain.doFilter(request, response);
-        } catch (ExpiredJwtException ex) {
-            String username = jwtTokenService.getUsernameFromExpiredJwt(ex);
-            log.error("만료된 토큰 예외에서 얻어낸 username: {}", username);
-
-            if (jwtTokenService.getRefreshToken(username) != null) {
-
-                UserRoleEnum role = userService.getUserInfo(username).getRole();
-                String newAccessToken = jwtTokenService.generateNewToken(username, role);
-
-                String encodedToken = URLEncoder.encode(newAccessToken, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
-
-                Cookie cookie = new Cookie(COOKIE_AUTH_HEADER, encodedToken);
-                cookie.setPath("/");
-                response.addCookie(cookie);
-
-                SecurityContext context = SecurityContextHolder.createEmptyContext();
-                context.setAuthentication(createAuthentication(username));
-                SecurityContextHolder.setContext(context);
-
-                filterChain.doFilter(request, response);
-            } else {
-                throw ex;
-            }
-        }
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(createAuthentication(username));
+        SecurityContextHolder.setContext(context);
     }
 
     // Authentication 객체 생성 (UPAT 생성)
