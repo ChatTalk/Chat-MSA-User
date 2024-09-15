@@ -40,19 +40,10 @@ import static com.example.chatserveruser.global.constant.Constants.COOKIE_AUTH_H
 @RequiredArgsConstructor
 public class WebSecurityConfig {
 
-    @Value("${client.url}")
-    private String clientUrl;
-
-    private final UserService userService;
     private final UserDetailsService userDetailsService;
     private final JwtTokenService jwtTokenService;
     private final AuthenticationConfiguration authenticationConfiguration;
     private final CustomLogoutHandler customLogoutHandler;
-    private final RedisTemplate<String, UserInfoDTO> cacheTemplate;
-    // 필터단 예외
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint; // 인증 예외 커스텀 메시지 던지기
-    private final JwtAccessDenyHandler jwtAccessDenyHandler; // 인가 예외 커스텀 메시지 던지기(역할별 접근권한같은)
-    private final JwtExceptionFilter jwtExceptionFilter;
 
     // 인증 매니저 생성
     @Bean
@@ -70,17 +61,11 @@ public class WebSecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);  // csrf 토큰 무효화 설정을 해야 인증 예외 허용 가능
-//        http.cors(cors -> cors.configurationSource(corsConfigurationSource())); // api gateway cors 설정 중복 회피
-        // cors 설정이랑 WebMvc 에서의 cors 설정이 충돌할 수 있기 때문에 security 단계에서만의 설정 필요
 
         // Security 의 기본 설정인 Session 방식이 아닌 JWT 방식을 사용하기 위한 설정
         http.sessionManagement(sessionManagement ->
                 sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
-
-        //만약 권한이 없는 상태에서 바로 권한 요청을 하는 경우 처리
-        http.exceptionHandling(e ->
-                e.authenticationEntryPoint(jwtAuthenticationEntryPoint).accessDeniedHandler(jwtAccessDenyHandler));
 
         // JWT 방식의 REST API 서버이기 때문에 FormLogin 방식, HttpBasic 방식 비활성화
         // 클라이언트가 분리됐으므로 비할성화
@@ -105,8 +90,7 @@ public class WebSecurityConfig {
 
         // 필터 체인에 필터 추가 및 순서 지정
         http.addFilterBefore(new JwtAuthorizationFilter(), CustomLoginFilter.class);
-        http.addFilterBefore(new JwtAuthenticationFilter(jwtTokenService, userService, userDetailsService, cacheTemplate), JwtAuthorizationFilter.class);
-        http.addFilterBefore(jwtExceptionFilter, JwtAuthenticationFilter.class);
+        http.addFilterBefore(new JwtAuthenticationFilter(userDetailsService), JwtAuthorizationFilter.class);
         http.addFilterBefore(customLoginFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

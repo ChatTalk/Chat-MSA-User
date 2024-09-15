@@ -18,7 +18,7 @@ import java.io.IOException;
 
 import static com.example.chatserveruser.global.constant.Constants.COOKIE_AUTH_HEADER;
 
-
+// 이 내용은, 향후에 인증 인스턴스에서 쓰기
 @Slf4j
 @Component
 @RequiredArgsConstructor
