@@ -1,7 +1,6 @@
 package com.example.chatserveruser.global.security.handler;
 
-import com.example.chatserveruser.global.security.service.JwtTokenService;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.example.chatserveruser.domain.dto.UserInfoDTO;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,11 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Component;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-
-import static com.example.chatserveruser.global.constant.Constants.COOKIE_AUTH_HEADER;
-import static com.example.chatserveruser.global.constant.Constants.REDIS_REFRESH_KEY;
+import static com.example.chatserveruser.global.constant.Constants.*;
 
 @Slf4j
 @Component
@@ -24,11 +19,16 @@ import static com.example.chatserveruser.global.constant.Constants.REDIS_REFRESH
 public class CustomLogoutHandler implements LogoutHandler {
 
     private final RedisTemplate<String, String> authTemplate;
-    private final JwtTokenService jwtTokenService;
+    private final RedisTemplate<String, UserInfoDTO> cacheTemplate;
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         log.info("로그아웃 핸들러 작동");
+
+        String username = request.getHeader("email");
+        log.info("헤더 확인(username): {}", username);
+        log.info("헤더 확인(role): {}", request.getHeader("role"));
+
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
             return;
@@ -36,17 +36,12 @@ public class CustomLogoutHandler implements LogoutHandler {
 
         for (Cookie cookie : cookies) {
             if (cookie.getName().equals(COOKIE_AUTH_HEADER)) {
-                String decodedToken = URLDecoder.decode(cookie.getValue(), StandardCharsets.UTF_8);
                 try {
                     log.info("정상 토큰에서의 로그아웃 처리");
-                    String email = jwtTokenService.getUserFromToken(decodedToken.substring(7)).getEmail();
-                    authTemplate.delete(REDIS_REFRESH_KEY + email);
-                } catch (ExpiredJwtException e) {
-                    log.warn("만료 토큰에서의 로그아웃 처리");
-                    String email = jwtTokenService.getUsernameFromExpiredJwt(e);
-                    authTemplate.delete(REDIS_REFRESH_KEY + email);
+                    authTemplate.delete(REDIS_REFRESH_KEY + username);
+                    cacheTemplate.delete(REDIS_ACCESS_KEY + cookie.getValue());
                 } catch (Exception e) {
-                    log.error("Redis에서 리프레시 토큰 삭제 중 오류 발생", e);
+                    log.error("리프레시 토큰 삭제 및 캐시 삭제 중 오류 발생", e);
                     throw e;
                 }
                 break;

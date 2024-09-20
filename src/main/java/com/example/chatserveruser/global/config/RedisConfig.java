@@ -1,5 +1,6 @@
 package com.example.chatserveruser.global.config;
 
+import com.example.chatserveruser.domain.dto.UserInfoDTO;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,6 +50,25 @@ public class RedisConfig {
 
     @Bean(name = "authTemplate")
     public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        return getRedisTemplate(redisConnectionFactory);
+    }
+
+    // 엑세스 토큰 기반 캐싱
+    @Bean(name = "cacheTemplate")
+    public RedisTemplate<String, UserInfoDTO> cacheTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, UserInfoDTO> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(UserInfoDTO.class));
+
+        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
+        redisTemplate.setHashValueSerializer(new Jackson2JsonRedisSerializer<>(UserInfoDTO.class));
+
+        return redisTemplate;
+    }
+
+    private RedisTemplate<String, String> getRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory);
 
