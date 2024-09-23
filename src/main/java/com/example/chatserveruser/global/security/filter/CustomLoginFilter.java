@@ -41,7 +41,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
 
-        log.info("로그인 단계 진입");
+//        log.info("로그인 단계 진입");
         try {
             UserDTO.Login requestDto = new ObjectMapper().readValue(request.getInputStream(), UserDTO.Login.class);
 
@@ -58,7 +58,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException {
-        log.info("로그인 성공 및 JWT 생성");
+//        log.info("로그인 성공 및 JWT 생성");
 
         String username = ((UserDetailsImpl) authResult.getPrincipal()).getUsername();
         UserRoleEnum role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getRole();
@@ -69,7 +69,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         cookie.setPath("/");
         response.addCookie(cookie);
 
-        log.info("쿠키: {}", cookie.getValue());
+//        log.info("쿠키: {}", cookie.getValue());
 
         // UserDTO.Info 생성
         UserDTO.Info userInfo = new UserDTO.Info(username, ((UserDetailsImpl) authResult.getPrincipal()).getUser().getPhone(), role.name());
@@ -85,7 +85,7 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
-        log.error("로그인 실패");
+//        log.error("로그인 실패");
 
         String errorMessage;
         if (exception instanceof BadCredentialsException) {

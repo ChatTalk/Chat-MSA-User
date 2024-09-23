@@ -26,8 +26,8 @@ public class CustomLogoutHandler implements LogoutHandler {
         log.info("로그아웃 핸들러 작동");
 
         String username = request.getHeader("email");
-        log.info("헤더 확인(username): {}", username);
-        log.info("헤더 확인(role): {}", request.getHeader("role"));
+        String id = request.getHeader("id");
+        log.info("헤더 확인(username): {}\n헤더 확인(id): {}", username, id);
 
         Cookie[] cookies = request.getCookies();
         if (cookies == null) {
@@ -39,7 +39,7 @@ public class CustomLogoutHandler implements LogoutHandler {
                 try {
                     log.info("정상 토큰에서의 로그아웃 처리");
                     authTemplate.delete(REDIS_REFRESH_KEY + username);
-                    cacheTemplate.delete(REDIS_ACCESS_KEY + cookie.getValue());
+                    cacheTemplate.delete(REDIS_ACCESS_KEY + id);
                 } catch (Exception e) {
                     log.error("리프레시 토큰 삭제 및 캐시 삭제 중 오류 발생", e);
                     throw e;

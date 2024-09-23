@@ -36,13 +36,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        log.info("인증 시도: {}", requestURI);
+        log.info("비동기 정합성 확인용 \n경로: {} \n이메일: {}", requestURI, request.getHeader("email"));
+
+//        log.info("인증 시도: {}", requestURI);
         String beforeToken = findAccessToken(request.getCookies());
-        log.info("초기 토큰값: {}", beforeToken);
+//        log.info("초기 토큰값: {}", beforeToken);
 
         String username = request.getHeader("email");
-        log.info("헤더 확인(username): {}", username);
-        log.info("헤더 확인(role): {}", request.getHeader("role"));
+//        log.info("헤더 확인(username): {}", username);
+//        log.info("헤더 확인(role): {}", request.getHeader("role"));
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(createAuthentication(username));
