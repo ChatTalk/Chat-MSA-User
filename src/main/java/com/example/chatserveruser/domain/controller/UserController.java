@@ -24,8 +24,8 @@ public class UserController {
     }
 
     // 카프카 테스트
-    @GetMapping("/test")
-    public void test() {
-        log.info("카프카 테스트용 송신");
-    }
+//    @GetMapping("/test")
+//    public void test() {
+//        log.info("카프카 테스트용 송신");
+//    }
 }
